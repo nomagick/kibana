@@ -113,7 +113,12 @@ export const createToolResultMessage = ({
   toolCallId: string;
 }): ToolMessage => {
   return new ToolMessage({
-    content: typeof content === 'string' ? content : JSON.stringify(content),
+    content:
+      typeof content === 'string'
+        ? content
+        : Array.isArray(content)
+        ? content
+        : JSON.stringify(content),
     tool_call_id: toolCallId,
   });
 };

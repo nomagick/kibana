@@ -8,6 +8,7 @@
 import type { OnechatAgentExecutionError } from '@kbn/onechat-common/base/errors';
 import type { PromptRequest } from '@kbn/onechat-common/agents/prompts';
 import type { ToolCall } from '@kbn/onechat-genai-utils/langchain';
+import type { BaseMessage } from '@langchain/core/messages';
 
 export enum AgentActionType {
   Error = 'error',
@@ -21,7 +22,7 @@ export enum AgentActionType {
 
 export interface ToolCallResult {
   toolCallId: string;
-  content: string;
+  content: BaseMessage['content'];
   artifact?: any;
 }
 

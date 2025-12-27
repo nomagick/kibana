@@ -12,7 +12,7 @@ import { tool as toTool } from '@langchain/core/tools';
 import type { Logger } from '@kbn/logging';
 import type { KibanaRequest } from '@kbn/core-http-server';
 import type { ChatAgentEvent } from '@kbn/onechat-common';
-import { ChatEventType } from '@kbn/onechat-common';
+import { ChatEventType, ToolResultType } from '@kbn/onechat-common';
 import type {
   AgentEventEmitterFn,
   ExecutableTool,
@@ -22,6 +22,7 @@ import type {
   ToolProvider,
 } from '@kbn/onechat-server';
 import { createErrorResult } from '@kbn/onechat-server';
+import type { MessageContent } from '@langchain/core/messages';
 import type { ToolCall } from './messages';
 
 export type ToolIdMapping = Map<string, string>;
@@ -119,7 +120,7 @@ export const toolToLangchain = async ({
   const schema = await tool.getSchema();
 
   return toTool(
-    async (rawInput: Record<string, unknown>, config): Promise<[string, RunToolReturn]> => {
+    async (rawInput: Record<string, unknown>, config): Promise<[MessageContent, unknown]> => {
       const toolCallId = config.configurable?.tool_call_id ?? config.toolCall?.id ?? 'unknown';
 
       let onEvent: ToolEventHandlerFn | undefined;
@@ -135,6 +136,14 @@ export const toolToLangchain = async ({
 
       try {
         const toolReturn = await tool.execute({ toolParams: input, onEvent, toolCallId });
+
+        if (
+          toolReturn.results?.length === 1 &&
+          toolReturn.results[0].type === ToolResultType.multiModal
+        ) {
+          return [toolReturn.results[0].content, toolReturn.results[0].data];
+        }
+
         const content = JSON.stringify({ results: toolReturn.results });
         return [content, toolReturn];
       } catch (e) {

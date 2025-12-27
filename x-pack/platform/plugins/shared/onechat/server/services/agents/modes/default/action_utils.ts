@@ -74,7 +74,7 @@ export const processToolNodeResponse = (
     toolMessages.map((msg) => {
       return {
         toolCallId: msg.tool_call_id,
-        content: extractTextContent(msg),
+        content: msg.content,
         artifact: msg.artifact,
       };
     })

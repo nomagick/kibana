@@ -75,6 +75,7 @@ async function getMcpToolInputSchema({
 interface McpToolExecutionResultSuccess {
   isError: false;
   content: unknown;
+  structuredContent?: unknown;
 }
 
 interface McpToolExecutionResultError {
@@ -176,13 +177,36 @@ export const getMcpToolType = ({
                 };
               }
 
+              let normalizedContent = result.content;
+              if (Array.isArray(normalizedContent)) {
+                normalizedContent = normalizedContent
+                  .map((item) => {
+                    if (typeof item !== 'object' || item === null) {
+                      return null;
+                    }
+                    if (item.type === 'text') {
+                      return item;
+                    }
+                    if (item.type === 'image' && item.data) {
+                      return {
+                        type: 'image_url',
+                        image_url: {
+                          url: `data:${item.mimeType || 'image/png'};base64,${item.data}`,
+                        },
+                      };
+                    }
+
+                    return null;
+                  })
+                  .filter(Boolean);
+              }
+
               return {
                 results: [
                   {
-                    type: ToolResultType.other,
-                    // MCP tool results are dynamic - content type varies per tool.
-                    // Cast is acceptable as ToolResultType.other handles arbitrary data.
-                    data: result.content as Record<string, unknown>,
+                    type: ToolResultType.multiModal,
+                    content: normalizedContent,
+                    data: result.structuredContent,
                   },
                 ],
               };

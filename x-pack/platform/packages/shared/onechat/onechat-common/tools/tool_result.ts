@@ -7,6 +7,7 @@
 
 import type { EsqlEsqlColumnInfo, FieldValue } from '@elastic/elasticsearch/lib/api/types';
 import type { ChartType } from '@kbn/visualization-utils';
+import type { MessageContent } from '@langchain/core/messages';
 
 export enum ToolResultType {
   resource = 'resource',
@@ -15,6 +16,7 @@ export enum ToolResultType {
   query = 'query',
   visualization = 'visualization',
   other = 'other',
+  multiModal = 'multi_modal',
   error = 'error',
 }
 
@@ -82,6 +84,12 @@ export type OtherResult<T extends Object = Record<string, unknown>> = ToolResult
   T
 >;
 
+export interface MultiModalResult {
+  type: ToolResultType.multiModal;
+  content: MessageContent;
+  data?: unknown;
+}
+
 export type ErrorResult = ToolResultMixin<
   ToolResultType.error,
   {
@@ -97,6 +105,7 @@ export type ToolResult<T extends Object = Record<string, unknown>> =
   | QueryResult
   | VisualizationResult
   | DashboardResult
+  | MultiModalResult
   | OtherResult<T>
   | ErrorResult;
 
@@ -122,6 +131,10 @@ export const isErrorResult = (result: ToolResult): result is ErrorResult => {
 
 export const isDashboardResult = (result: ToolResult): result is DashboardResult => {
   return result.type === ToolResultType.dashboard;
+};
+
+export const isMultimodalResult = (result: ToolResult): result is MultiModalResult => {
+  return result.type === ToolResultType.multiModal;
 };
 
 export interface VisualizationElementAttributes {

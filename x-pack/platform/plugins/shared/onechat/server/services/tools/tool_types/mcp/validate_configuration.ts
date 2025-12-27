@@ -33,7 +33,7 @@ export async function validateConnector({
     throw createBadRequestError(`Connector '${connectorId}' not found or not accessible`);
   }
 
-  if (connector.actionTypeId !== MCP_CONNECTOR_TYPE_ID) {
+  if (connector.actionTypeId !== MCP_CONNECTOR_TYPE_ID && connector.config?.MCP !== 'Enabled') {
     throw createBadRequestError(
       `Connector '${connectorId}' is not an MCP connector. Expected type '${MCP_CONNECTOR_TYPE_ID}', got '${connector.actionTypeId}'`
     );

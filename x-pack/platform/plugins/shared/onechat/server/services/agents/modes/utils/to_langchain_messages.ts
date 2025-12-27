@@ -5,10 +5,10 @@
  * 2.0.
  */
 
-import type { BaseMessage, HumanMessage } from '@langchain/core/messages';
+import type { BaseMessage, HumanMessage, MessageContent } from '@langchain/core/messages';
 import { AIMessage, ToolMessage } from '@langchain/core/messages';
 import type { AssistantResponse, ToolCallWithResult } from '@kbn/onechat-common';
-import { ConversationRoundStatus, isToolCallStep } from '@kbn/onechat-common';
+import { ConversationRoundStatus, isToolCallStep, ToolResultType } from '@kbn/onechat-common';
 import {
   createAIMessage,
   createUserMessage,
@@ -133,9 +133,14 @@ export const createToolCallMessages = (toolCall: ToolCallWithResult): [AIMessage
     ],
   });
 
+  let content: string | MessageContent = JSON.stringify({ results: toolCall.results });
+  if (toolCall.results.length === 1 && toolCall.results[0].type === ToolResultType.multiModal) {
+    content = toolCall.results[0].content;
+  }
+
   const toolResultMessage = new ToolMessage({
     tool_call_id: toolCall.tool_call_id,
-    content: JSON.stringify({ results: toolCall.results }),
+    content,
   });
 
   return [toolCallMessage, toolResultMessage];

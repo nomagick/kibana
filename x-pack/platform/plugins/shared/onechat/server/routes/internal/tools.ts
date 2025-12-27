@@ -506,9 +506,13 @@ export function registerInternalToolsRoutes({
 
       const { type } = request.query;
 
-      const connectors: ConnectorItem[] = allConnectors
-        .filter((connector) => (type ? connector.actionTypeId === type : true))
-        .map(toConnectorItem);
+      let theFilter = (connector: ConnectorItem) => (type ? connector.actionTypeId === type : true);
+      if (type === MCP_CONNECTOR_ID) {
+        theFilter = (connector: ConnectorItem) =>
+          connector.actionTypeId === MCP_CONNECTOR_ID || connector.config?.MCP === 'Enabled';
+      }
+
+      const connectors: ConnectorItem[] = allConnectors.filter(theFilter).map(toConnectorItem);
 
       return response.ok<ListConnectorsResponse>({
         body: {
@@ -568,8 +572,7 @@ export function registerInternalToolsRoutes({
       const { connectorId } = request.query;
 
       const connector = await actionsClient.get({ id: connectorId });
-
-      if (connector.actionTypeId !== MCP_CONNECTOR_ID) {
+      if (connector.actionTypeId !== MCP_CONNECTOR_ID && connector.config?.MCP !== 'Enabled') {
         response.badRequest({
           body: {
             message: `Connector '${connectorId}' is not an MCP connector. Expected type '${MCP_CONNECTOR_ID}', got '${connector.actionTypeId}'`,

@@ -34,6 +34,7 @@ import type { Logger } from '@kbn/logging';
 import type { RunToolReturn } from '@kbn/onechat-server';
 import { createErrorResult } from '@kbn/onechat-server';
 import { AgentPromptRequestSourceType } from '@kbn/onechat-common/agents';
+import { ToolResultType } from '@kbn/onechat-common';
 import type { StateType } from './state';
 import { BROWSER_TOOL_PREFIX, steps, tags } from './constants';
 import type { ToolCallResult } from './actions';
@@ -230,9 +231,18 @@ export const extractToolReturn = (message: ToolCallResult): RunToolReturn => {
     }
 
     return message.artifact as RunToolReturn;
+  } else if (Array.isArray(message.content)) {
+    return {
+      results: [
+        {
+          type: ToolResultType.multiModal,
+          content: message.content,
+        },
+      ],
+    };
   } else {
     // langchain tool validation error (such as schema errors) are out of our control and don't emit artifacts...
-    if (message.content.startsWith('Error:')) {
+    if (typeof message.content === 'string' && message.content.startsWith('Error:')) {
       return {
         results: [createErrorResult(message.content)],
       };
